@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>加法練習題生成器</title>
+    <meta name="description" content="產生可列印的加法練習題，支援橫式、直式、計算格與答案卷。" />
+  </head>
+  <body>
+    <div class="app">
+      <form class="controls" id="controls" autocomplete="off">
+        <h1>加法練習題生成器</h1>
+
+        <fieldset>
+          <label class="title" for="m">位數</label>
+          <select id="m" name="m">
+            <option value="1">1 位數</option>
+            <option value="2">2 位數</option>
+            <option value="3">3 位數</option>
+          </select>
+          <label class="check" id="mix-label">
+            <input type="checkbox" id="mix" name="mix" />
+            <span>混合 <span id="mix-text">m-1</span> 位數</span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <label class="title" for="carry">進位</label>
+          <select id="carry" name="carry">
+            <option value="any">隨機</option>
+            <option value="none">不進位</option>
+            <option value="must">必進位</option>
+          </select>
+        </fieldset>
+
+        <fieldset>
+          <label class="title" for="n">題數（1–200）</label>
+          <input type="number" id="n" name="n" min="1" max="200" step="1" />
+        </fieldset>
+
+        <fieldset>
+          <legend>排版</legend>
+          <div class="row">
+            <label><input type="radio" name="layout" value="horizontal" /> 橫式</label>
+            <label><input type="radio" name="layout" value="vertical" /> 直式</label>
+          </div>
+          <label class="check"><input type="checkbox" id="grid" name="grid" /> 預留計算格</label>
+          <label class="check"><input type="checkbox" id="ans" name="ans" /> 附答案頁</label>
+        </fieldset>
+
+        <div class="buttons">
+          <button type="button" id="regen">重新出題</button>
+          <button type="button" id="print" class="primary">列印 / 存成 PDF</button>
+        </div>
+        <p class="warning" id="warning"></p>
+
+        <div class="premium" id="premium">
+          完整版功能規劃中。
+          <button type="button" id="upgrade">升級完整版（即將推出）</button>
+        </div>
+      </form>
+
+      <main class="preview" id="preview" aria-label="練習卷預覽"></main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
