@@ -151,6 +151,23 @@ $('show-answers').addEventListener('change', (e) => {
 $('regen').addEventListener('click', () => update(readForm(randomSeed())));
 $('print').addEventListener('click', () => window.print());
 $('upgrade').addEventListener('click', () => void startCheckout());
+
+// The URL always holds the current settings and seed, so copying it shares this exact worksheet.
+const copyLabel = $('copy-label');
+let copyTimer: number | undefined;
+$('copy-link').addEventListener('click', async () => {
+  const url = location.href;
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch {
+    // Clipboard API is unavailable (e.g. not HTTPS) or was denied: let the user copy by hand.
+    window.prompt('複製這個連結：', url);
+    return;
+  }
+  copyLabel.textContent = '已複製！';
+  clearTimeout(copyTimer);
+  copyTimer = window.setTimeout(() => (copyLabel.textContent = '複製連結'), 2000);
+});
 $('premium').hidden = isPremium();
 
 fillForm(current);
