@@ -4,8 +4,8 @@ export type Layout = 'horizontal' | 'vertical';
 
 export interface RenderOptions {
   layout: Layout;
-  /** Draw working cells (carry row + one square per digit). */
-  grid: boolean;
+  /** Horizontal only: leave blank room under each problem for working. */
+  space: boolean;
   answers: boolean;
   title: string;
 }
@@ -40,10 +40,9 @@ function digitCells(n: number | null, width: number): string[] {
   return Array.from({ length: width }, (_, i) => s[i - (width - s.length)] ?? '');
 }
 
-function verticalProblem(p: Problem, index: number, grid: boolean): HTMLElement {
-  // Longer number on top; the sum can have one more digit than the longer addend.
-  const [top, bottom] = digitCount(p.a) >= digitCount(p.b) ? [p.a, p.b] : [p.b, p.a];
-  const width = digitCount(top) + 1;
+function verticalProblem(p: Problem, index: number): HTMLElement {
+  // Augend on top. The sum can have one more digit than the longer addend.
+  const width = Math.max(digitCount(p.a), digitCount(p.b)) + 1;
   const box = el('div', 'problem vertical');
   box.append(el('div', 'num', `(${index + 1})`));
 
@@ -53,15 +52,14 @@ function verticalProblem(p: Problem, index: number, grid: boolean): HTMLElement 
     table.append(el('div', `cell op ${cls}`, op));
     for (const c of cells) table.append(el('div', `cell ${cls}`, c));
   };
-  if (grid) row('carry', '', digitCells(null, width));
-  row('digit', '', digitCells(top, width));
-  row('digit addend', '+', digitCells(bottom, width));
+  row('digit', '', digitCells(p.a, width));
+  row('digit addend', '+', digitCells(p.b, width));
   row('answer', '', digitCells(null, width));
   box.append(table);
   return box;
 }
 
-function horizontalProblem(p: Problem, index: number, grid: boolean): HTMLElement {
+function horizontalProblem(p: Problem, index: number, space: boolean): HTMLElement {
   const box = el('div', 'problem horizontal');
   const line = el('div', 'hline');
   line.append(
@@ -70,26 +68,19 @@ function horizontalProblem(p: Problem, index: number, grid: boolean): HTMLElemen
     el('span', 'answer-blank'),
   );
   box.append(line);
-  if (grid) {
-    // Empty scratch grid sized for working the problem out vertically.
-    const width = Math.max(digitCount(p.a), digitCount(p.b)) + 2;
-    const scratch = el('div', 'scratch');
-    scratch.style.setProperty('--cols', String(width));
-    for (let i = 0; i < width * 4; i++) scratch.append(el('div', 'cell'));
-    box.append(scratch);
-  }
+  if (space) box.append(el('div', 'work-space'));
   return box;
 }
 
 function answerKey(problems: Problem[], title: string): HTMLElement {
   const sheet = el('section', 'sheet answers');
   sheet.append(el('h2', undefined, `${title}｜答案`));
-  const list = el('ol', 'answer-list');
-  for (const p of problems) {
-    const li = el('li');
-    li.append(el('span', 'expr', `${p.a} + ${p.b} = `), el('strong', undefined, String(p.sum)));
-    list.append(li);
-  }
+  const list = el('div', 'answer-list');
+  problems.forEach((p, i) => {
+    const item = el('div', 'answer-item');
+    item.append(el('span', 'num', `(${i + 1})`), el('strong', undefined, String(p.sum)));
+    list.append(item);
+  });
   sheet.append(list);
   return sheet;
 }
@@ -97,9 +88,10 @@ function answerKey(problems: Problem[], title: string): HTMLElement {
 export function renderWorksheet(root: HTMLElement, problems: Problem[], opts: RenderOptions): void {
   const sheet = el('section', 'sheet questions');
   sheet.append(header(opts.title));
-  const body = el('div', `problems ${opts.layout}${opts.grid ? ' with-grid' : ''}`);
+  const space = opts.space && opts.layout === 'horizontal';
+  const body = el('div', `problems ${opts.layout}${space ? ' with-space' : ''}`);
   problems.forEach((p, i) =>
-    body.append(opts.layout === 'vertical' ? verticalProblem(p, i, opts.grid) : horizontalProblem(p, i, opts.grid)),
+    body.append(opts.layout === 'vertical' ? verticalProblem(p, i) : horizontalProblem(p, i, space)),
   );
   sheet.append(body);
 

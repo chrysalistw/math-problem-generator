@@ -3,65 +3,106 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>加法練習題生成器</title>
     <meta name="description" content="產生可列印的加法練習題，支援橫式、直式、計算格與答案卷。" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Cpath d='M16 8v16M8 16h16' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
   </head>
   <body>
-    <div class="app">
-      <form class="controls" id="controls" autocomplete="off">
-        <h1>加法練習題生成器</h1>
+    <div class="site">
+      <header class="topbar">
+        <div class="topbar-inner">
+          <a class="brand" href="./">
+            <span class="logo" aria-hidden="true">+</span>
+            <span>加法練習題生成器</span>
+          </a>
+          <button type="button" id="print" class="btn primary">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z" /></svg>
+            <span>列印 / 存成 PDF</span>
+          </button>
+        </div>
+      </header>
 
-        <fieldset>
-          <label class="title" for="m">位數</label>
-          <select id="m" name="m">
-            <option value="1">1 位數</option>
-            <option value="2">2 位數</option>
-            <option value="3">3 位數</option>
-          </select>
-          <label class="check" id="mix-label">
-            <input type="checkbox" id="mix" name="mix" />
-            <span>混合 <span id="mix-text">m-1</span> 位數</span>
-          </label>
-        </fieldset>
-
-        <fieldset>
-          <label class="title" for="carry">進位</label>
-          <select id="carry" name="carry">
-            <option value="any">隨機</option>
-            <option value="none">不進位</option>
-            <option value="must">必進位</option>
-          </select>
-        </fieldset>
-
-        <fieldset>
-          <label class="title" for="n">題數（1–200）</label>
-          <input type="number" id="n" name="n" min="1" max="200" step="1" />
-        </fieldset>
-
-        <fieldset>
-          <legend>排版</legend>
-          <div class="row">
-            <label><input type="radio" name="layout" value="horizontal" /> 橫式</label>
-            <label><input type="radio" name="layout" value="vertical" /> 直式</label>
+      <main class="container">
+        <form class="toolbar" id="controls" autocomplete="off">
+          <div class="control">
+            <span class="label">被加數</span>
+            <div class="segmented" role="radiogroup" aria-label="被加數位數">
+              <label><input type="radio" name="a" value="1" /><span>1 位</span></label>
+              <label><input type="radio" name="a" value="2" /><span>2 位</span></label>
+              <label><input type="radio" name="a" value="3" /><span>3 位</span></label>
+            </div>
           </div>
-          <label class="check"><input type="checkbox" id="grid" name="grid" /> 預留計算格</label>
-          <label class="check"><input type="checkbox" id="ans" name="ans" /> 附答案頁</label>
-        </fieldset>
 
-        <div class="buttons">
-          <button type="button" id="regen">重新出題</button>
-          <button type="button" id="print" class="primary">列印 / 存成 PDF</button>
+          <div class="control">
+            <span class="label">加數</span>
+            <div class="segmented" role="radiogroup" aria-label="加數位數">
+              <label><input type="radio" name="b" value="1" /><span>1 位</span></label>
+              <label><input type="radio" name="b" value="2" /><span>2 位</span></label>
+              <label><input type="radio" name="b" value="3" /><span>3 位</span></label>
+            </div>
+          </div>
+
+          <div class="control">
+            <span class="label">進位</span>
+            <label class="check"><input type="checkbox" id="nc" name="nc" /><span>不進位</span></label>
+          </div>
+
+          <div class="control">
+            <label class="label" for="n">題數</label>
+            <input type="number" id="n" name="n" min="1" max="200" step="1" class="count-input" />
+          </div>
+
+          <div class="control">
+            <span class="label">排版</span>
+            <div class="segmented" role="radiogroup" aria-label="排版">
+              <label><input type="radio" name="layout" value="horizontal" /><span>橫式</span></label>
+              <label><input type="radio" name="layout" value="vertical" /><span>直式</span></label>
+            </div>
+          </div>
+
+          <div class="control">
+            <span class="label">列印選項</span>
+            <div class="checks">
+              <label class="check" id="space-label" title="直式本身就是計算格式，不需另外留白">
+                <input type="checkbox" id="space" name="space" /><span>預留計算空間</span>
+              </label>
+              <label class="check"><input type="checkbox" id="ans" name="ans" /><span>附答案頁</span></label>
+            </div>
+          </div>
+        </form>
+
+        <section class="results" aria-labelledby="summary">
+          <div class="results-bar">
+            <h2 id="summary" class="summary"></h2>
+            <div class="results-actions">
+              <label class="switch">
+                <input type="checkbox" id="show-answers" />
+                <span class="track" aria-hidden="true"></span>
+                <span>顯示答案</span>
+              </label>
+              <button type="button" id="regen" class="btn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5" /></svg>
+                <span>重新出題</span>
+              </button>
+            </div>
+          </div>
+          <p class="warning" id="warning" role="status"></p>
+          <div class="cards" id="cards"></div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="footer-inner">
+          <p>設定會保存在網址中，分享連結就能得到同一份練習卷。</p>
+          <div id="premium">
+            <button type="button" id="upgrade" class="btn small">升級完整版（即將推出）</button>
+          </div>
         </div>
-        <p class="warning" id="warning"></p>
-
-        <div class="premium" id="premium">
-          完整版功能規劃中。
-          <button type="button" id="upgrade">升級完整版（即將推出）</button>
-        </div>
-      </form>
-
-      <main class="preview" id="preview" aria-label="練習卷預覽"></main>
+      </footer>
     </div>
+
+    <div id="print-root"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

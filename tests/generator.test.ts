@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { digitCount, generate, hasCarry, type CarryMode } from '../src/generator';
-
-const modes: CarryMode[] = ['none', 'must', 'any'];
+import { digitCount, generate, hasCarry } from '../src/generator';
 
 describe('hasCarry', () => {
   it('detects carries in any column', () => {
@@ -9,57 +7,58 @@ describe('hasCarry', () => {
     expect(hasCarry(14, 3)).toBe(false);
     expect(hasCarry(150, 60)).toBe(true);
     expect(hasCarry(123, 456)).toBe(false);
+    expect(hasCarry(3, 198)).toBe(true);
   });
 });
 
 describe('generate', () => {
-  for (const m of [1, 2, 3]) {
-    for (const mixDigits of [false, true]) {
-      for (const carry of modes) {
-        it(`m=${m} mix=${mixDigits} carry=${carry}`, () => {
-          const { problems } = generate({ m, mixDigits, count: 30, carry, seed: 42 });
+  for (const aDigits of [1, 2, 3]) {
+    for (const bDigits of [1, 2, 3]) {
+      for (const noCarry of [false, true]) {
+        it(`a=${aDigits} digits, b=${bDigits} digits, noCarry=${noCarry}`, () => {
+          const { problems } = generate({ aDigits, bDigits, noCarry, count: 30, seed: 42 });
           expect(problems).toHaveLength(30);
           for (const p of problems) {
-            expect(p.sum).toBe(p.a + p.b);
-            const [long, short] = [p.a, p.b].sort((x, y) => y - x).map(digitCount);
-            expect(long).toBe(m);
-            const allowed = mixDigits && m >= 2 ? [m, m - 1] : [m];
-            expect(allowed).toContain(short);
+            expect(digitCount(p.a)).toBe(aDigits);
+            expect(digitCount(p.b)).toBe(bDigits);
             expect(p.a).toBeGreaterThan(0);
             expect(p.b).toBeGreaterThan(0);
-            if (carry === 'none') expect(hasCarry(p.a, p.b)).toBe(false);
-            if (carry === 'must') expect(hasCarry(p.a, p.b)).toBe(true);
+            expect(p.sum).toBe(p.a + p.b);
+            if (noCarry) expect(hasCarry(p.a, p.b)).toBe(false);
           }
         });
       }
     }
   }
 
-  it('mix mode actually produces m-1 digit addends', () => {
-    const { problems } = generate({ m: 3, mixDigits: true, count: 50, carry: 'any', seed: 7 });
-    expect(problems.some((p) => Math.min(digitCount(p.a), digitCount(p.b)) === 2)).toBe(true);
+  it('random mode includes carrying problems', () => {
+    const { problems } = generate({ aDigits: 2, bDigits: 2, noCarry: false, count: 50, seed: 7 });
+    expect(problems.some((p) => hasCarry(p.a, p.b))).toBe(true);
   });
 
   it('is reproducible with the same seed', () => {
-    const opts = { m: 2, mixDigits: true, count: 20, carry: 'any' as const, seed: 123 };
+    const opts = { aDigits: 2, bDigits: 1, noCarry: false, count: 20, seed: 123 };
     expect(generate(opts)).toEqual(generate(opts));
     expect(generate({ ...opts, seed: 124 }).problems).not.toEqual(generate(opts).problems);
   });
 
   it('has no duplicates when the problem space is large enough', () => {
-    const { problems, warning } = generate({ m: 2, mixDigits: false, count: 100, carry: 'any', seed: 1 });
+    const { problems, warning } = generate({ aDigits: 2, bDigits: 2, noCarry: false, count: 100, seed: 1 });
     expect(new Set(problems.map((p) => `${p.a}+${p.b}`)).size).toBe(100);
     expect(warning).toBeUndefined();
   });
 
   it('warns when it must repeat (1-digit, no carry has only 36 pairs)', () => {
-    const { problems, warning } = generate({ m: 1, mixDigits: false, count: 50, carry: 'none', seed: 1 });
+    const { problems, warning } = generate({ aDigits: 1, bDigits: 1, noCarry: true, count: 50, seed: 1 });
     expect(problems).toHaveLength(50);
     expect(warning).toBeDefined();
   });
 
-  it('clamps count to 1..200', () => {
-    expect(generate({ m: 1, mixDigits: false, count: 0, carry: 'any', seed: 1 }).problems).toHaveLength(1);
-    expect(generate({ m: 3, mixDigits: false, count: 999, carry: 'any', seed: 1 }).problems).toHaveLength(200);
+  it('clamps count to 1..200 and digits to 1..3', () => {
+    expect(generate({ aDigits: 1, bDigits: 1, noCarry: false, count: 0, seed: 1 }).problems).toHaveLength(1);
+    const big = generate({ aDigits: 9, bDigits: 0, noCarry: false, count: 999, seed: 1 }).problems;
+    expect(big).toHaveLength(200);
+    expect(digitCount(big[0].a)).toBe(3);
+    expect(digitCount(big[0].b)).toBe(1);
   });
 });

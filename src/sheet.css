@@ -1,0 +1,48 @@
+/* A4 worksheet, used only when printing (see print.css). Fixed black-on-white. */
+#print-root {
+  --ink: #000;
+  --muted: #555;
+  --cell: 8.5mm;
+  color: var(--ink);
+  background: #fff;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+}
+
+#print-root .sheet-header { border-bottom: 2px solid var(--ink); padding-bottom: 4mm; margin-bottom: 7mm; }
+#print-root .sheet-header h1 { font-size: 20pt; margin: 0 0 3mm; text-align: center; }
+#print-root .sheet-fields { display: flex; justify-content: space-between; font-size: 12pt; }
+#print-root .field { display: inline-flex; align-items: flex-end; }
+#print-root .field .blank { display: inline-block; width: 32mm; border-bottom: 1px solid var(--ink); height: 1.2em; }
+
+#print-root .problems { display: grid; column-gap: 6mm; }
+#print-root .problems.horizontal { grid-template-columns: repeat(3, 1fr); column-gap: 4mm; row-gap: 10mm; }
+#print-root .problems.horizontal.with-space { row-gap: 4mm; }
+#print-root .problems.vertical { grid-template-columns: repeat(3, 1fr); row-gap: 10mm; }
+#print-root .problem { break-inside: avoid; }
+#print-root .num { font-size: 10pt; color: var(--muted); }
+
+/* horizontal */
+#print-root .hline { display: flex; align-items: baseline; gap: 2mm; font-size: 15pt; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#print-root .hline .num { min-width: 8mm; }
+#print-root .answer-blank { display: inline-block; width: 16mm; border-bottom: 1px solid var(--ink); }
+/* Blank room for working the problem out; intentionally no lines. */
+#print-root .work-space { height: 30mm; }
+
+/* vertical */
+#print-root .problem.vertical .num { margin-bottom: 1mm; }
+#print-root .vgrid {
+  display: grid; grid-template-columns: repeat(var(--cols), var(--cell)); width: max-content;
+  font-size: 17pt; font-variant-numeric: tabular-nums;
+}
+#print-root .vgrid .cell { height: var(--cell); display: flex; align-items: center; justify-content: center; }
+#print-root .vgrid .addend { border-bottom: 0.5mm solid var(--ink); }
+#print-root .vgrid .answer { height: calc(var(--cell) * 1.15); }
+
+/* answers: number + answer only */
+#print-root .answers h2 { font-size: 16pt; text-align: center; border-bottom: 2px solid var(--ink); padding-bottom: 3mm; margin: 0 0 6mm; }
+#print-root .answer-list {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 3mm 6mm;
+  font-size: 13pt; font-variant-numeric: tabular-nums;
+}
+#print-root .answer-item { display: flex; align-items: baseline; gap: 2mm; break-inside: avoid; }
+#print-root .answer-item .num { min-width: 10mm; }

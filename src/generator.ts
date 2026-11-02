@@ -1,19 +1,20 @@
 import { createRng, randInt, type Rng } from './rng';
 
-export type CarryMode = 'none' | 'must' | 'any';
-
 export interface GenOptions {
-  /** Digits of the first addend, 1..3. */
-  m: number;
-  /** When m ≥ 2, also allow the second addend to have m-1 digits. */
-  mixDigits: boolean;
+  /** Digits of the augend (被加數), 1..3. */
+  aDigits: number;
+  /** Digits of the addend (加數), 1..3. */
+  bDigits: number;
+  /** true: no column may carry. false: random. */
+  noCarry: boolean;
   count: number;
-  carry: CarryMode;
   seed: number;
 }
 
 export interface Problem {
+  /** Augend (被加數), always written first / on top. */
   a: number;
+  /** Addend (加數). */
   b: number;
   sum: number;
 }
@@ -39,6 +40,10 @@ export function hasCarry(a: number, b: number): boolean {
   return false;
 }
 
+export function clampDigits(d: number): number {
+  return Math.min(3, Math.max(1, Math.round(d) || 1));
+}
+
 function randWithDigits(rng: Rng, d: number): number {
   return randInt(rng, d === 1 ? 1 : 10 ** (d - 1), 10 ** d - 1);
 }
@@ -47,19 +52,21 @@ function randWithDigits(rng: Rng, d: number): number {
 function noCarryPair(rng: Rng, da: number, db: number): [number, number] {
   let a = 0;
   let b = 0;
-  for (let i = 0; i < da; i++) {
-    const aTop = i === da - 1;
+  for (let i = 0; i < Math.max(da, db); i++) {
+    const aHere = i < da;
     const bHere = i < db;
-    const bTop = i === db - 1;
-    let ai: number;
+    // A number's leading digit must be at least 1.
+    const aMin = i === da - 1 ? 1 : 0;
+    const bMin = i === db - 1 ? 1 : 0;
+    let ai = 0;
     let bi = 0;
-    if (!bHere) {
-      ai = randInt(rng, aTop ? 1 : 0, 9);
-    } else {
-      // Leave room for b's digit: b needs at least 1 when it is b's top digit.
-      const bMin = bTop ? 1 : 0;
-      ai = randInt(rng, aTop ? 1 : 0, 9 - bMin);
+    if (aHere && bHere) {
+      ai = randInt(rng, aMin, 9 - bMin);
       bi = randInt(rng, bMin, 9 - ai);
+    } else if (aHere) {
+      ai = randInt(rng, aMin, 9);
+    } else {
+      bi = randInt(rng, bMin, 9);
     }
     a += ai * 10 ** i;
     b += bi * 10 ** i;
@@ -67,31 +74,10 @@ function noCarryPair(rng: Rng, da: number, db: number): [number, number] {
   return [a, b];
 }
 
-function makePair(rng: Rng, opts: GenOptions): [number, number] {
-  const m = clampDigits(opts.m);
-  const db = opts.mixDigits && m >= 2 && rng() < 0.5 ? m - 1 : m;
-  let a: number;
-  let b: number;
-  if (opts.carry === 'none') {
-    [a, b] = noCarryPair(rng, m, db);
-  } else {
-    // 'must': resample until some column carries.
-    for (let tries = 0; ; tries++) {
-      a = randWithDigits(rng, m);
-      b = randWithDigits(rng, db);
-      if (opts.carry === 'any' || hasCarry(a, b) || tries > 1000) break;
-    }
-  }
-  // Shuffle order so the shorter number is sometimes first (horizontal layout).
-  return rng() < 0.5 ? [a, b] : [b, a];
-}
-
-function clampDigits(m: number): number {
-  return Math.min(3, Math.max(1, Math.round(m) || 1));
-}
-
 export function generate(opts: GenOptions): GenResult {
   const rng = createRng(opts.seed);
+  const da = clampDigits(opts.aDigits);
+  const db = clampDigits(opts.bDigits);
   const count = Math.min(MAX_COUNT, Math.max(1, Math.round(opts.count) || 1));
   const problems: Problem[] = [];
   const seen = new Set<string>();
@@ -100,7 +86,7 @@ export function generate(opts: GenOptions): GenResult {
   let repeated = false;
 
   while (problems.length < count) {
-    const [a, b] = makePair(rng, opts);
+    const [a, b] = opts.noCarry ? noCarryPair(rng, da, db) : [randWithDigits(rng, da), randWithDigits(rng, db)];
     const key = `${a}+${b}`;
     tries++;
     if (seen.has(key)) {
